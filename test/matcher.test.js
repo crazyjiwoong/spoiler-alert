@@ -17,25 +17,16 @@ test('ignores case, spacing and punctuation', () => {
   }
 });
 
+test('matches inside longer words and run-together titles', () => {
+  assert.equal(hit(['Elden Ring'], '#EldenRingDLC ending'), 'Elden Ring');
+  assert.equal(hit(['Elden Ring'], 'eldenringbuildguide'), 'Elden Ring');
+  assert.equal(hit(['GTA 6'], 'GTA6trailer'), 'GTA 6');
+  assert.equal(hit(['Elden Ring'], '엘든링(EldenRing) 최종 보스'), 'Elden Ring');
+});
+
 test('ignores accents', () => {
   assert.equal(hit(['Pokemon'], 'Pokémon Legends Z-A ending'), 'Pokemon');
   assert.equal(hit(['Pokémon'], 'POKEMON leak'), 'Pokémon');
-});
-
-test('Latin keywords match whole words only', () => {
-  assert.equal(hit(['Control'], 'Best PS5 controller settings'), null);
-  assert.equal(hit(['Control'], 'Control 2 ending explained'), 'Control');
-  assert.equal(hit(['Inside'], 'Inside the new Apple campus'), 'Inside');
-  assert.equal(hit(['Halo'], 'Halos and horns'), null);
-  assert.equal(hit(['GTA 6'], 'GTA 60 fps mod'), null);
-  assert.equal(hit(['GTA 6'], 'GTA6 trailer 3 breakdown'), 'GTA 6');
-  assert.equal(hit(['Final Fantasy VII'], 'Final Fantasy VIII remaster'), null);
-  assert.equal(hit(['Final Fantasy VII'], 'Final Fantasy VII Rebirth finale'), 'Final Fantasy VII');
-});
-
-test('Latin keywords next to Korean text still match', () => {
-  assert.equal(hit(['Elden Ring'], '엘든링(Elden Ring) 최종 보스'), 'Elden Ring');
-  assert.equal(hit(['Elden Ring'], '엘든링Elden Ring 공략'), 'Elden Ring');
 });
 
 test('Korean keywords match inside words and ignore spacing', () => {

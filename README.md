@@ -22,9 +22,8 @@ Nothing is removed or locked. Covered videos still open normally when you click 
 
 ## How matching works
 
-- **Case, spacing, punctuation and accents are ignored.** `Elden Ring` also matches `ELDEN-RING`, `EldenRing`, `#eldenring` and `Elden Ring's`. `Pokemon` also matches `Pokémon`.
-- **English keywords match whole words only.** `Control` (the game) won't cover every `controller` video, `GTA 6` won't match `GTA 60`, and `Final Fantasy VII` won't match `Final Fantasy VIII`.
-- **Korean, Japanese and Chinese keywords match anywhere in the text**, because words in those languages often have particles attached (`엘든링을`).
+- **Case, spacing, punctuation and accents are ignored**, and the keyword can appear anywhere, even inside a longer word. `Elden Ring` also matches `ELDEN-RING`, `EldenRing`, `#EldenRingDLC` and `eldenringbuild`. `Pokemon` also matches `Pokémon`. This catches titles and hashtags written without spaces.
+- Because matching is this loose, very short or common keywords cover a lot: `Control` also covers `controller` videos. Prefer a full name (`Control 2`, `Control game`) or a character name.
 - The title, channel name and description snippet are checked. A video that never names the game in text can't be detected.
 
 Tip: add the character names, DLC names and nicknames people use too (e.g. `Elden Ring, Shadow of the Erdtree, Malenia`).

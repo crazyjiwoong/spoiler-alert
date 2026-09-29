@@ -7,7 +7,7 @@
   "keywordPlaceholder": { "message": "e.g. Elden Ring, Severance" },
   "add": { "message": "Add" },
   "hint": {
-    "message": "Matches whole words, ignoring case, spacing and accents. Add several at once with commas."
+    "message": "Case, spacing, punctuation and accents are ignored, so EldenRing and #eldenring match too. Add several at once with commas."
   },
   "empty": { "message": "No keywords yet. Add a game, show or movie to start blocking spoilers." },
   "remove": { "message": "Remove" },
