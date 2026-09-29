@@ -130,6 +130,11 @@ html.sa-hover-blocked #video-preview {
 
 /* ---------- Shorts player ---------- */
 
+/* Hidden until its title has been checked (content.js sets data-sa-checked) */
+ytd-reel-video-renderer:not([data-sa-checked]) > :not(.sa-reel-overlay) {
+  visibility: hidden !important;
+}
+
 .sa-reel-overlay {
   z-index: 1000 !important;
   pointer-events: auto !important;

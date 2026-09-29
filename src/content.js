@@ -239,9 +239,34 @@
     return r.height > 0 && r.top <= y && r.bottom >= y;
   }
 
+  // A reel stays hidden (see content.css) until its title has loaded and been checked, so a Short
+  // never shows before we know whether it's a spoiler. If no title shows up, give up after a moment
+  // rather than leave the Short blank.
+  const REEL_TITLE_TIMEOUT = 1500;
+
+  function markReelChecked(reel, text) {
+    const now = performance.now();
+    if (!enabled || !needles.length || text.trim()) {
+      reel.__saEmptySince = null;
+      reel.setAttribute('data-sa-checked', '');
+      return;
+    }
+    reel.__saEmptySince ??= now;
+    if (now - reel.__saEmptySince >= REEL_TITLE_TIMEOUT) {
+      reel.setAttribute('data-sa-checked', '');
+    } else {
+      reel.removeAttribute('data-sa-checked');
+      reel.__saTimer ??= setTimeout(() => {
+        reel.__saTimer = null;
+        scheduleScan();
+      }, REEL_TITLE_TIMEOUT);
+    }
+  }
+
   function processReel(reel) {
     const key = isActiveReel(reel) ? location.pathname : null;
     const text = outermost(reel, REEL_META).map(readText).join(' ');
+    markReelChecked(reel, text);
     const sig = version + '|' + key + '|' + text;
     if (reel.__saSig === sig && (!reel.__saHit || reel.querySelector(':scope > .sa-reel-overlay'))) return;
     reel.__saSig = sig;
@@ -325,7 +350,43 @@
     requestAnimationFrame(scan);
   }
 
-  new MutationObserver(scheduleScan).observe(document.documentElement, {
+  function outermostCard(el) {
+    let card = el.closest(RENDERERS);
+    for (let up = card; up; up = up.parentElement && up.parentElement.closest(RENDERERS)) card = up;
+    return card;
+  }
+
+  // Cards YouTube just added or changed are checked right away, inside the MutationObserver callback.
+  // That runs before the browser paints, so a spoiler never shows for even a frame. The full scan
+  // below still runs as a safety net.
+  function onMutations(records) {
+    const cards = new Set();
+    const reels = new Set();
+    let watch = false;
+    for (const m of records) {
+      const target = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+      if (!target || target.closest('.sa-overlay, .sa-reel-overlay, .sa-desc-gate')) continue;
+      const card = outermostCard(target);
+      if (card) cards.add(card);
+      const reel = target.closest(REELS);
+      if (reel) reels.add(reel);
+      if (!watch && target.closest(WATCH_META)) watch = true;
+      for (const node of m.addedNodes) {
+        if (node.nodeType !== 1) continue;
+        if (node.matches(RENDERERS)) cards.add(outermostCard(node));
+        for (const inner of node.querySelectorAll(RENDERERS)) cards.add(outermostCard(inner));
+        if (node.matches(REELS)) reels.add(node);
+        for (const inner of node.querySelectorAll(REELS)) reels.add(inner);
+        if (!watch && (node.matches(WATCH_META) || node.querySelector(WATCH_META))) watch = true;
+      }
+    }
+    cards.forEach(processCard);
+    reels.forEach(processReel);
+    if (watch) processWatch();
+    scheduleScan();
+  }
+
+  new MutationObserver(onMutations).observe(document.documentElement, {
     childList: true,
     subtree: true,
     characterData: true,
