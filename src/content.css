@@ -207,6 +207,16 @@ ytd-reel-video-renderer:not([data-sa-checked]) > :not(.sa-reel-overlay) {
   color: #111;
 }
 
+/* Hold the picture while we check a freshly opened video */
+html.sa-watch-pending #movie_player video,
+html.sa-watch-pending #movie_player .ytp-cued-thumbnail-overlay {
+  visibility: hidden !important;
+}
+
+.sa-player-overlay {
+  border-radius: inherit;
+}
+
 /* While the description is hidden, hide the player's chapter names too */
 html.sa-watch-guard .ytp-chapter-container,
 html.sa-watch-guard .ytp-tooltip-title {

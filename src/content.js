@@ -92,6 +92,8 @@
 
   // Description box on the watch page
   const WATCH_META = 'ytd-watch-metadata';
+  const WATCH_TITLE = 'ytd-watch-metadata #title h1, ytd-watch-metadata h1';
+  const WATCH_PLAYER = '#movie_player';
   const WATCH_DESC = [
     'ytd-watch-metadata #description',
     '#description-inline-expander',
@@ -102,7 +104,8 @@
   let needles = [];
   let version = 0;
   const revealedShorts = new Set();
-  const revealedWatch = new Set();
+  const revealedPlayer = new Set(); // video ids the user chose to watch anyway
+  const revealedDesc = new Set(); // video ids whose description the user opened
 
   const msg = (name, sub) => chrome.i18n.getMessage(name, sub) || name;
 
@@ -304,21 +307,98 @@
     if (key) for (const v of shortsVideos(reel)) if (!v.paused) v.pause();
   }
 
-  // On a matching watch page, collapse the description (and chapter names) behind a button
-  function processWatch() {
-    const meta = location.pathname === '/watch' && document.querySelector(WATCH_META);
-    const desc = meta && document.querySelector(WATCH_DESC);
-    const id = new URLSearchParams(location.search).get('v');
-    const hit = desc && !revealedWatch.has(id) ? findHit(meta.textContent) : null;
+  // ---------- Watch page ----------
+  //
+  // When a matching video is opened it doesn't start playing: the player is covered with tape and a
+  // "Watch anyway" button, and the page title, tab title and description are hidden too.
+  //
+  // Right after an in-app navigation the page still shows the previous video's title for a moment,
+  // so until the new video's details have loaded ("pending") playback is held and the video hidden.
+  // If that takes longer than WATCH_PENDING_MAX we stop waiting rather than keep the video blank.
 
-    document.documentElement.classList.toggle('sa-watch-guard', !!hit);
+  const WATCH_PENDING_MAX = 3000;
+  const BLOCKED_DOC_TITLE = '⚠ SPOILER ALERT - YouTube';
+  let nav = { start: 0, prevTitle: '' };
+  let readyId = null;
+  let pausedByUs = false;
+  let savedDocTitle = null;
+  let pendingTimer = null;
+
+  const currentVideoId = () =>
+    location.pathname === '/watch' ? new URLSearchParams(location.search).get('v') : null;
+
+  function watchTitleText() {
+    const h1 = document.querySelector(WATCH_TITLE);
+    return h1 ? h1.textContent.trim() : '';
+  }
+
+  document.addEventListener('yt-navigate-start', () => {
+    nav = { start: performance.now(), prevTitle: watchTitleText() };
+    readyId = null;
+  });
+  document.addEventListener('yt-page-data-updated', () => {
+    readyId = currentVideoId();
+    scheduleScan();
+  });
+
+  function watchVideo() {
+    return document.querySelector(WATCH_PLAYER + ' video');
+  }
+
+  function updatePlayerCover(keyword) {
+    const player = document.querySelector(WATCH_PLAYER);
+    let overlay = document.querySelector('.sa-player-overlay');
+    if (overlay && (!keyword || overlay.parentElement !== player)) {
+      overlay.remove();
+      overlay = null;
+    }
+    if (!keyword || !player) return;
+    if (!overlay) {
+      overlay = makeOverlay('sa-reel-overlay sa-player-overlay');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'sa-reveal';
+      button.dataset.label = msg('watchReveal');
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        revealedPlayer.add(currentVideoId());
+        pausedByUs = false;
+        processWatch();
+        const video = watchVideo();
+        if (video) video.play().catch(() => {});
+      });
+      overlay.appendChild(button);
+      player.appendChild(overlay);
+    }
+    overlay.querySelector('.sa-kw').dataset.label = msg('reelBadge', keyword);
+  }
+
+  function updateWatchTitle(block) {
+    const h1 = block && document.querySelector(WATCH_TITLE);
+    for (const old of document.querySelectorAll('.sa-watch-title')) {
+      if (old !== h1) old.classList.remove('sa-watch-title', 'sa-title');
+    }
+    if (h1) h1.classList.add('sa-watch-title', 'sa-title');
+
+    if (block) {
+      if (document.title !== BLOCKED_DOC_TITLE) {
+        savedDocTitle = document.title;
+        document.title = BLOCKED_DOC_TITLE;
+      }
+    } else if (savedDocTitle !== null) {
+      if (document.title === BLOCKED_DOC_TITLE) document.title = savedDocTitle;
+      savedDocTitle = null;
+    }
+  }
+
+  function updateDescription(desc, keyword) {
     for (const old of document.querySelectorAll('.sa-desc-hidden')) {
-      if (old !== desc || !hit) old.classList.remove('sa-desc-hidden');
+      if (old !== desc || !keyword) old.classList.remove('sa-desc-hidden');
     }
     for (const gate of document.querySelectorAll('.sa-desc-gate')) {
-      if (gate.nextElementSibling !== desc || !hit) gate.remove();
+      if (gate.nextElementSibling !== desc || !keyword) gate.remove();
     }
-    if (!hit) return;
+    if (!keyword || !desc) return;
 
     desc.classList.add('sa-desc-hidden');
     let gate = desc.previousElementSibling;
@@ -327,12 +407,52 @@
       gate.type = 'button';
       gate.className = 'sa-desc-gate';
       gate.addEventListener('click', () => {
-        revealedWatch.add(new URLSearchParams(location.search).get('v'));
+        revealedDesc.add(currentVideoId());
         processWatch();
       });
       desc.before(gate);
     }
-    gate.dataset.label = msg('descReveal', hit);
+    gate.dataset.label = msg('descReveal', keyword);
+  }
+
+  function processWatch() {
+    const id = currentVideoId();
+    const meta = id && document.querySelector(WATCH_META);
+    const guarding = !!id && enabled && needles.length > 0;
+    const title = watchTitleText();
+    const waited = performance.now() - nav.start;
+    const ready = !!meta && (readyId === id || (title && title !== nav.prevTitle) || waited > WATCH_PENDING_MAX);
+    const pending = guarding && !ready && waited <= WATCH_PENDING_MAX;
+    const hit = guarding && ready ? findHit(meta.textContent) : null;
+    const blockPlayer = hit && !revealedPlayer.has(id) ? hit : null;
+    const blockDesc = hit && !revealedDesc.has(id) ? hit : null;
+
+    const root = document.documentElement;
+    root.classList.toggle('sa-watch-pending', pending);
+    root.classList.toggle('sa-watch-guard', !!blockDesc);
+    if (pending && !pendingTimer) {
+      pendingTimer = setTimeout(() => {
+        pendingTimer = null;
+        scheduleScan();
+      }, WATCH_PENDING_MAX);
+    }
+
+    updatePlayerCover(blockPlayer);
+    updateWatchTitle(!!blockPlayer);
+    updateDescription(meta && document.querySelector(WATCH_DESC), blockDesc);
+
+    const video = watchVideo();
+    if (!video) return;
+    if (pending || blockPlayer) {
+      if (!video.paused) {
+        video.pause();
+        pausedByUs = true;
+      }
+    } else if (pausedByUs) {
+      // We held autoplay while checking and the video turned out fine: start it as YouTube would have
+      pausedByUs = false;
+      if (id) video.play().catch(() => {});
+    }
   }
 
   function scan() {
@@ -370,7 +490,7 @@
       if (card) cards.add(card);
       const reel = target.closest(REELS);
       if (reel) reels.add(reel);
-      if (!watch && target.closest(WATCH_META)) watch = true;
+      if (!watch && target.closest(WATCH_META + ', title')) watch = true;
       for (const node of m.addedNodes) {
         if (node.nodeType !== 1) continue;
         if (node.matches(RENDERERS)) cards.add(outermostCard(node));
@@ -396,7 +516,7 @@
   document.addEventListener('yt-navigate-finish', scheduleScan);
   setInterval(scheduleScan, 2000);
 
-  // Pause a covered Short as soon as it starts autoplaying
+  // Pause a covered Short or watch-page video as soon as it starts playing
   document.addEventListener(
     'play',
     (e) => {
@@ -404,6 +524,7 @@
       if (!(v instanceof HTMLVideoElement)) return;
       const onShorts = location.pathname.startsWith('/shorts/') && v.closest('ytd-shorts, #shorts-player');
       if (v.closest('[data-sa-reel-blocked]') || (onShorts && activeReelBlocked())) v.pause();
+      else if (v.closest(WATCH_PLAYER) && currentVideoId()) processWatch();
     },
     true
   );

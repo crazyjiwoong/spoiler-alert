@@ -16,7 +16,7 @@ Nothing is removed or locked. Covered videos still open normally when you click 
 | "Up next" sidebar and end-screen suggestions | Thumbnail taped over, title replaced |
 | Shorts shelves | Thumbnail taped over, title replaced |
 | Shorts feed (`/shorts/…`) | The whole Short is covered and autoplay is paused. Click **Show anyway** to watch it |
-| Watch page | If the video matches, the description is collapsed behind a **Show description** button and chapter names in the player are hidden |
+| Watch page | If the video matches, it **doesn't start playing**: the player is taped over with a **Watch anyway** button, and the title and tab title are hidden. The description stays collapsed behind a **Show description** button, and chapter names in the player are hidden |
 | Notifications | Thumbnail taped over, notification text replaced |
 | Hovering a covered thumbnail | The inline preview doesn't play |
 
@@ -58,7 +58,8 @@ Spoiler Alert has no servers, no analytics and no network requests. It only asks
 
 ## Known limitations
 
-- The title and comments on a watch page you open are left visible on purpose. Only the description is collapsed.
+- Comments on a watch page aren't covered.
+- The watch page also checks YouTube's "Games" tag in the description, so a video can be covered there even when its thumbnail wasn't.
 - Search autocomplete suggestions aren't covered.
 - YouTube changes its markup often. If something stops being covered, the selectors at the top of [`src/content.js`](src/content.js) (`RENDERERS`, `THUMBS`, `TITLES`) are usually all that needs updating. Issues and PRs are welcome.
 
