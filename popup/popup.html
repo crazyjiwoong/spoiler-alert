@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <title>Spoiler Alert</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <div class="tape">⚠ SPOILER ALERT ⚠</div>
+      <label class="switch" title="차단 켜기/끄기">
+        <input type="checkbox" id="enabled" />
+        <span></span>
+      </label>
+    </header>
+
+    <form id="add-form">
+      <input id="keyword" type="text" placeholder="스포 당하기 싫은 작품 (예: 엘든 링)" autocomplete="off" />
+      <button type="submit">추가</button>
+    </form>
+    <p class="hint">띄어쓰기·대소문자·기호는 무시하고 비교해요. 쉼표로 여러 개를 한 번에 넣을 수 있어요.</p>
+
+    <ul id="list"></ul>
+    <p id="empty" class="empty">아직 등록한 키워드가 없어요.</p>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
