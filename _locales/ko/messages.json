@@ -1,0 +1,23 @@
+{
+  "extName": { "message": "Spoiler Alert" },
+  "extDescription": {
+    "message": "등록한 키워드(게임, 드라마, 영화 등)가 들어간 유튜브 영상의 썸네일과 제목을 SPOILER ALERT 테이프로 가려 줍니다."
+  },
+  "toggleTitle": { "message": "차단 켜기/끄기" },
+  "keywordPlaceholder": { "message": "스포 당하기 싫은 작품 (예: 엘든 링)" },
+  "add": { "message": "추가" },
+  "hint": {
+    "message": "대소문자·띄어쓰기·기호는 무시하고, 영어는 단어 단위로 비교해요. 쉼표로 여러 개를 한 번에 넣을 수 있어요."
+  },
+  "empty": { "message": "아직 등록한 키워드가 없어요." },
+  "remove": { "message": "삭제" },
+  "reelBadge": {
+    "message": "🔒 스포일러 주의 · $KEYWORD$",
+    "placeholders": { "keyword": { "content": "$1" } }
+  },
+  "reelReveal": { "message": "그래도 볼래요" },
+  "descReveal": {
+    "message": "⚠ 스포일러 주의 · $KEYWORD$ — 설명 보기",
+    "placeholders": { "keyword": { "content": "$1" } }
+  }
+}

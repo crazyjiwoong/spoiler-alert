@@ -1,4 +1,4 @@
-/* ---------- 썸네일 테이프 ---------- */
+/* ---------- Thumbnail tape ---------- */
 
 .sa-pos {
   position: relative !important;
@@ -21,7 +21,7 @@
 
 .sa-overlay {
   z-index: 50 !important;
-  /* 클릭은 아래 링크로 그대로 전달 → 영상에는 정상적으로 들어갈 수 있다 */
+  /* Clicks fall through to the link underneath, so the video still opens normally */
   pointer-events: none !important;
 }
 
@@ -72,8 +72,10 @@
   text-overflow: ellipsis;
 }
 
-.sa-kw::before {
-  content: "🔒 " attr(data-kw);
+.sa-kw::before,
+.sa-reveal::before,
+.sa-desc-gate::before {
+  content: attr(data-label);
 }
 
 @container (max-height: 70px) {
@@ -82,9 +84,9 @@
   }
 }
 
-/* ---------- 제목 ---------- */
+/* ---------- Titles ---------- */
 
-/* 원래 제목은 자리만 차지하게 투명하게 두고, 같은 글자 크기로 위에 SPOILER ALERT를 그린다 */
+/* The real title stays in place but transparent, and SPOILER ALERT is drawn over it at the same size */
 .sa-title {
   position: relative !important;
   color: transparent !important;
@@ -119,14 +121,14 @@ html[dark] .sa-title::before,
   display: none !important;
 }
 
-/* 가려진 카드에 마우스를 올렸을 때 뜨는 미리보기 재생 숨기기 */
+/* Hide the hover preview player over covered cards */
 html.sa-hover-blocked ytd-video-preview,
 html.sa-hover-blocked #video-preview {
   visibility: hidden !important;
   opacity: 0 !important;
 }
 
-/* ---------- 쇼츠 플레이어 ---------- */
+/* ---------- Shorts player ---------- */
 
 .sa-reel-overlay {
   z-index: 1000 !important;
@@ -148,10 +150,6 @@ html.sa-hover-blocked #video-preview {
   border-radius: 999px;
 }
 
-.sa-reel-overlay .sa-kw::before {
-  content: "🔒 스포일러 주의 · " attr(data-kw);
-}
-
 .sa-reveal {
   position: absolute;
   left: 50%;
@@ -171,11 +169,7 @@ html.sa-hover-blocked #video-preview {
   color: #111;
 }
 
-.sa-reveal::before {
-  content: "그래도 볼래요";
-}
-
-/* ---------- 영상 페이지 설명란 ---------- */
+/* ---------- Watch page description ---------- */
 
 .sa-desc-hidden {
   display: none !important;
@@ -195,7 +189,6 @@ html.sa-hover-blocked #video-preview {
 }
 
 .sa-desc-gate::before {
-  content: "⚠ 스포일러 주의 · " attr(data-kw) " — 설명 보기";
   display: inline-block;
   padding: 6px 12px;
   border-radius: 8px;
@@ -209,7 +202,7 @@ html.sa-hover-blocked #video-preview {
   color: #111;
 }
 
-/* 설명을 가린 영상에서는 플레이어의 챕터 이름도 숨긴다 */
+/* While the description is hidden, hide the player's chapter names too */
 html.sa-watch-guard .ytp-chapter-container,
 html.sa-watch-guard .ytp-tooltip-title {
   visibility: hidden !important;

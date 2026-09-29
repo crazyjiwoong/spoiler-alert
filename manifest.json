@@ -1,9 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Spoiler Alert",
+  "name": "__MSG_extName__",
   "version": "1.0.0",
-  "description": "등록한 키워드(게임, 드라마, 영화 등)가 들어간 유튜브 영상의 썸네일과 제목을 SPOILER ALERT 테이프로 가려 줍니다.",
-  "permissions": ["storage"],
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
+  "permissions": [
+    "storage"
+  ],
   "action": {
     "default_title": "Spoiler Alert",
     "default_popup": "popup/popup.html",
@@ -22,9 +25,17 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/*", "https://m.youtube.com/*"],
-      "js": ["src/content.js"],
-      "css": ["src/content.css"],
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://m.youtube.com/*"
+      ],
+      "js": [
+        "src/matcher.js",
+        "src/content.js"
+      ],
+      "css": [
+        "src/content.css"
+      ],
       "run_at": "document_start"
     }
   ]

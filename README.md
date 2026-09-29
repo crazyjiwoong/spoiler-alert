@@ -1,56 +1,82 @@
 # ⚠ Spoiler Alert
 
-스포 당하기 싫은 작품(게임, 드라마, 영화, 애니 등)의 이름을 등록해 두면,
-유튜브에서 그 단어가 들어간 영상의 **썸네일은 SPOILER ALERT 테이프로 가리고, 제목은 `⚠ SPOILER ALERT`로 바꿔 주는** 크롬 확장 프로그램입니다.
+**English** · [한국어](README.ko.md)
 
-영상을 막는 게 아니라 **실수로 보는 것만 막습니다.** 가려진 카드도 클릭하면 평소처럼 들어갈 수 있습니다.
+A browser extension for people who haven't finished the game yet.
 
-## 가려지는 곳
+Add the games, shows and movies you don't want spoiled. Any YouTube video that mentions them gets its **thumbnail taped over with SPOILER ALERT tape** and its **title replaced with `⚠ SPOILER ALERT`**.
 
-| 위치 | 동작 |
+Nothing is removed or locked. Covered videos still open normally when you click them. The point is that you never see a spoiler *by accident* while scrolling.
+
+## What gets covered
+
+| Where | What happens |
 | --- | --- |
-| 홈 피드 / 검색 결과 / 채널 / 재생목록 | 썸네일에 테이프, 제목 교체, 설명·챕터 미리보기 숨김 |
-| 영상 오른쪽 추천 목록, 영상 끝 추천 화면 | 썸네일에 테이프, 제목 교체 |
-| 영상 페이지 설명란 | 제목·설명에 키워드가 있으면 설명란을 접고 **설명 보기** 버튼으로 대체, 재생바의 챕터 이름도 숨김 |
-| 쇼츠 선반 (홈·검색의 Shorts 줄) | 썸네일에 테이프, 제목 교체 |
-| 쇼츠 넘겨보기 (`/shorts/…`) | 화면 전체를 테이프로 덮고 자동 재생을 멈춤 → **그래도 볼래요** 버튼으로 해제 |
-| 알림 목록 | 썸네일에 테이프, 알림 문구 교체 |
-| 썸네일에 마우스 올리기 | 미리보기 자동 재생 숨김 |
+| Home feed, search results, channel pages, playlists | Thumbnail taped over, title replaced, description snippets and chapter previews hidden |
+| "Up next" sidebar and end-screen suggestions | Thumbnail taped over, title replaced |
+| Shorts shelves | Thumbnail taped over, title replaced |
+| Shorts feed (`/shorts/…`) | The whole Short is covered and autoplay is paused. Click **Show anyway** to watch it |
+| Watch page | If the video matches, the description is collapsed behind a **Show description** button and chapter names in the player are hidden |
+| Notifications | Thumbnail taped over, notification text replaced |
+| Hovering a covered thumbnail | The inline preview doesn't play |
 
-키워드 비교는 **띄어쓰기·대소문자·기호를 무시**합니다. `엘든 링`을 등록하면 `엘든링`, `[엘든 링]`도 가려지고, `Elden Ring`을 등록하면 `ELDEN-RING`도 가려집니다.
-한글 이름과 영어 이름을 둘 다 등록해 두는 걸 추천합니다.
+## How matching works
 
-## 설치 (크롬 / 엣지 / 웨일)
+- **Case, spacing, punctuation and accents are ignored.** `Elden Ring` also matches `ELDEN-RING`, `EldenRing`, `#eldenring` and `Elden Ring's`. `Pokemon` also matches `Pokémon`.
+- **English keywords match whole words only.** `Control` (the game) won't cover every `controller` video, `GTA 6` won't match `GTA 60`, and `Final Fantasy VII` won't match `Final Fantasy VIII`.
+- **Korean, Japanese and Chinese keywords match anywhere in the text**, because words in those languages often have particles attached (`엘든링을`).
+- The title, channel name and description snippet are checked. A video that never names the game in text can't be detected.
 
-1. 이 저장소를 내려받습니다. (`Code → Download ZIP` 후 압축 풀기, 또는 `git clone`)
-2. 주소창에 `chrome://extensions` 입력 (엣지는 `edge://extensions`, 웨일은 `whale://extensions`)
-3. 오른쪽 위 **개발자 모드** 켜기
-4. **압축해제된 확장 프로그램을 로드합니다** 클릭 → 이 폴더(`manifest.json`이 있는 폴더) 선택
-5. 툴바의 퍼즐 아이콘에서 Spoiler Alert를 고정해 두면 편합니다.
+Tip: add the character names, DLC names and nicknames people use too (e.g. `Elden Ring, Shadow of the Erdtree, Malenia`).
 
-## 사용법
+## Install
 
-툴바 아이콘을 누르면 키워드 창이 열립니다.
+The extension isn't on the Chrome Web Store yet, so install it in developer mode. It works in Chrome, Edge, Brave, Opera, Vivaldi and other Chromium browsers.
 
-- 작품 이름을 입력하고 **추가** (쉼표로 여러 개를 한 번에: `엘든 링, elden ring, 황금 나무의 그림자`)
-- 키워드 옆 `×`로 삭제
-- 오른쪽 위 스위치로 잠깐 전체 끄기/켜기
+1. Download this repository (**Code → Download ZIP**, then unzip), or `git clone` it.
+2. Open `chrome://extensions` (`edge://extensions` in Edge).
+3. Turn on **Developer mode** (top right).
+4. Click **Load unpacked** and select the folder that contains `manifest.json`.
+5. Pin **Spoiler Alert** from the puzzle-piece menu so it's one click away.
 
-변경 사항은 열려 있는 유튜브 탭에 바로 반영되고, 크롬 계정 동기화로 다른 PC에도 따라갑니다.
+To update, pull or re-download the files, then click the ↻ reload button on the extension's card and refresh your YouTube tabs.
 
-## 알아 두면 좋은 점
+## Usage
 
-- 제목·채널명·설명 미리보기에 키워드가 **글자로** 들어 있어야 잡아낼 수 있습니다. 제목에 작품 이름이 없는 영상은 가려지지 않습니다.
-- 영상에 직접 들어간 페이지의 제목과 댓글은 일부러 가리지 않습니다. (설명란만 접힘)
-- 검색창 자동완성 목록은 가리지 않습니다.
-- 유튜브는 화면 구조를 자주 바꿉니다. 어느 날 안 가려지는 곳이 생기면 `src/content.js` 위쪽의 선택자 목록(`RENDERERS`, `THUMBS`, `TITLES`)을 고치면 됩니다.
+Click the toolbar icon:
 
-## 파일 구조
+- Type a name and press **Add**. Separate several with commas.
+- Click **×** on a keyword to remove it.
+- Use the switch in the top right to pause blocking.
+
+Changes apply to open YouTube tabs immediately and sync across your devices through your browser account.
+
+The interface is in English, or in Korean when the browser is set to Korean.
+
+## Privacy
+
+Spoiler Alert has no servers, no analytics and no network requests. It only asks for the `storage` permission, which it uses to save your keyword list with your browser's built-in sync. It only runs on `youtube.com`.
+
+## Known limitations
+
+- The title and comments on a watch page you open are left visible on purpose. Only the description is collapsed.
+- Search autocomplete suggestions aren't covered.
+- YouTube changes its markup often. If something stops being covered, the selectors at the top of [`src/content.js`](src/content.js) (`RENDERERS`, `THUMBS`, `TITLES`) are usually all that needs updating. Issues and PRs are welcome.
+
+## Development
 
 ```
-manifest.json        확장 프로그램 설정 (Manifest V3)
-src/content.js       유튜브 페이지에서 카드를 찾아 키워드를 검사하고 가리는 스크립트
-src/content.css      테이프·제목 교체 스타일
-popup/               툴바 아이콘을 눌렀을 때 뜨는 키워드 관리 창
-icons/               아이콘
+manifest.json      Extension manifest (Manifest V3)
+src/matcher.js     Keyword matching
+src/content.js     Finds video cards on YouTube and covers the matching ones
+src/content.css    Tape, title and Shorts overlay styles
+popup/             Keyword manager shown from the toolbar icon
+_locales/          English and Korean UI strings
+test/              Unit tests for the matcher
+```
+
+Run the tests (Node 18+):
+
+```
+npm test
 ```

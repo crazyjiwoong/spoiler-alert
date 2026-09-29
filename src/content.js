@@ -1,7 +1,8 @@
 (() => {
   'use strict';
 
-  // 영상 하나를 나타내는 카드들 (홈, 검색, 추천 사이드바, 쇼츠 선반, 채널, 재생목록, 알림, 종료 화면)
+  // Cards that each represent one video (home, search, sidebar, Shorts shelves, channels, playlists,
+  // notifications, end screens)
   const RENDERERS = [
     'ytd-rich-item-renderer',
     'ytd-video-renderer',
@@ -61,8 +62,8 @@
     '.ytp-ce-video-title',
   ].join(',');
 
-  // 검색 결과의 설명 스니펫, 챕터 목록처럼 내용이 드러나는 부분은 통째로 숨긴다
-  // 제목 외의 줄(재생목록 속 영상 제목 등) 중 키워드가 들어간 줄은 숨긴다
+  // Parts that reveal content (description snippets, chapter lists in search results) are hidden outright
+  // Secondary lines (e.g. the video list inside a playlist card) are hidden when they contain a keyword
   const ROWS = [
     '[class*="MetadataViewModelMetadataRow"]',
     '[class*="metadata-view-model__metadata-row"]',
@@ -77,9 +78,10 @@
     '#expandable-metadata',
   ].join(',');
 
-  // 쇼츠 플레이어 (위아래로 넘기다 자동 재생되는 쇼츠)
+  // The Shorts player (the swipe feed that autoplays each Short)
   const REELS = 'ytd-reel-video-renderer';
-  // 쇼츠 안에는 플레이어 버튼 문구("이 동영상에 좋아요 표시" 등)도 있으므로 제목·채널·해시태그 영역만 검사한다
+  // A reel also contains the player's button labels ("like this video" etc.), so only its
+  // title/channel/hashtag area is checked
   const REEL_META = [
     'yt-reel-metapanel-view-model',
     '.ytShortsVideoTitleViewModelShortsVideoTitle',
@@ -88,7 +90,7 @@
     '#metapanel',
   ].join(',');
 
-  // 영상 페이지의 설명란
+  // Description box on the watch page
   const WATCH_META = 'ytd-watch-metadata';
   const WATCH_DESC = [
     'ytd-watch-metadata #description',
@@ -97,31 +99,22 @@
   ].join(',');
 
   let enabled = true;
-  let needles = []; // [{ raw, norm }]
+  let needles = [];
   let version = 0;
   const revealedShorts = new Set();
   const revealedWatch = new Set();
 
-  const normalize = (s) =>
-    (s || '')
-      .normalize('NFKC')
-      .toLowerCase()
-      .replace(/[\s\-_:·.,'"’‘“”!?()[\]{}|/\\~]+/g, '');
+  const msg = (name, sub) => chrome.i18n.getMessage(name, sub) || name;
 
   function setSettings({ enabled: on = true, keywords = [] }) {
     enabled = on !== false;
-    needles = keywords
-      .map((raw) => ({ raw, norm: normalize(raw) }))
-      .filter((n) => n.norm);
+    needles = SpoilerMatcher.compile(keywords);
     version++;
     scheduleScan();
   }
 
   function findHit(text) {
-    if (!enabled || !needles.length) return null;
-    const hay = normalize(text);
-    const hit = needles.find((n) => hay.includes(n.norm));
-    return hit ? hit.raw : null;
+    return enabled ? SpoilerMatcher.findKeyword(needles, text) : null;
   }
 
   function readText(el) {
@@ -134,7 +127,7 @@
     return text;
   }
 
-  // 중첩된 매치 중 가장 바깥쪽 요소만 남긴다
+  // Keep only the outermost of nested matches
   function outermost(root, selector) {
     const found = [...root.querySelectorAll(selector)];
     return found.filter((n) => !found.some((o) => o !== n && o.contains(n)));
@@ -153,12 +146,12 @@
     if (getComputedStyle(host).position === 'static') host.classList.add('sa-pos');
   }
 
-  function makeOverlay(className, keyword) {
+  // All visible text is drawn with CSS `content: attr(data-label)` so it never ends up in
+  // textContent, which is what gets matched against the keywords.
+  function makeOverlay(className) {
     const overlay = document.createElement('div');
     overlay.className = className;
-    // 모든 문구는 CSS content로 그려서 textContent(=키워드 검사 대상)에 섞이지 않게 한다
     overlay.innerHTML = '<div class="sa-tape sa-tape-1"></div><div class="sa-tape sa-tape-2"></div><div class="sa-kw"></div>';
-    overlay.querySelector('.sa-kw').dataset.kw = keyword;
     return overlay;
   }
 
@@ -169,15 +162,15 @@
       let overlay = host.querySelector(':scope > .sa-overlay');
       if (!overlay) {
         ensurePositioned(host);
-        overlay = makeOverlay('sa-overlay', keyword);
+        overlay = makeOverlay('sa-overlay');
         host.appendChild(overlay);
       }
-      overlay.querySelector('.sa-kw').dataset.kw = keyword;
+      overlay.querySelector('.sa-kw').dataset.label = '🔒 ' + keyword;
     }
 
     for (const title of outermost(el, TITLES)) {
       title.classList.add('sa-title');
-      // 마우스를 올렸을 때 뜨는 툴팁으로 원래 제목이 보이지 않게
+      // Don't let the hover tooltip show the real title
       if (title.hasAttribute('title')) {
         title.setAttribute('data-sa-orig-title', title.getAttribute('title'));
         title.removeAttribute('title');
@@ -211,13 +204,13 @@
   }
 
   function processCard(el) {
-    // 카드 안에 또 카드가 있는 경우(예: rich-item > lockup) 바깥 것만 처리
+    // Cards can nest (e.g. rich-item > lockup); only handle the outer one
     if (el.parentElement && el.parentElement.closest(RENDERERS)) return;
 
     const text = readText(el);
     const sig = version + '|' + text;
     if (el.__saSig === sig) {
-      // YouTube가 카드 내부를 다시 그리면서 오버레이를 지웠을 수 있다
+      // YouTube may have re-rendered the card and dropped our overlay
       if (el.__saHit && !isIntact(el)) block(el, el.__saHit);
       return;
     }
@@ -227,7 +220,7 @@
     else unblock(el);
   }
 
-  // 쇼츠 플레이어의 <video>는 카드 밖에 있을 수도 있다
+  // The Shorts <video> may live outside the reel element
   function shortsVideos(reel) {
     const inside = [...reel.querySelectorAll('video')];
     return inside.length ? inside : [...document.querySelectorAll('ytd-shorts video, #shorts-player video')];
@@ -238,7 +231,7 @@
     return !!(reel && reel.hasAttribute('data-sa-reel-blocked'));
   }
 
-  // 쇼츠 피드에서 지금 화면 가운데에 있는 쇼츠인지
+  // Whether this reel is the one currently centered in the Shorts feed
   function isActiveReel(reel) {
     if (reel.hasAttribute('is-active')) return true;
     const r = reel.getBoundingClientRect();
@@ -266,10 +259,11 @@
     reel.setAttribute('data-sa-reel-blocked', '');
     if (!overlay) {
       ensurePositioned(reel);
-      overlay = makeOverlay('sa-reel-overlay', reel.__saHit);
+      overlay = makeOverlay('sa-reel-overlay');
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'sa-reveal';
+      button.dataset.label = msg('reelReveal');
       button.addEventListener('click', (e) => {
         e.stopPropagation();
         revealedShorts.add(location.pathname);
@@ -281,11 +275,11 @@
       overlay.appendChild(button);
       reel.appendChild(overlay);
     }
-    overlay.querySelector('.sa-kw').dataset.kw = reel.__saHit;
+    overlay.querySelector('.sa-kw').dataset.label = msg('reelBadge', reel.__saHit);
     if (key) for (const v of shortsVideos(reel)) if (!v.paused) v.pause();
   }
 
-  // 영상에 들어가도 설명란(+ 챕터 이름)은 키워드가 있으면 접어 둔다
+  // On a matching watch page, collapse the description (and chapter names) behind a button
   function processWatch() {
     const meta = location.pathname === '/watch' && document.querySelector(WATCH_META);
     const desc = meta && document.querySelector(WATCH_DESC);
@@ -313,7 +307,7 @@
       });
       desc.before(gate);
     }
-    gate.dataset.kw = hit;
+    gate.dataset.label = msg('descReveal', hit);
   }
 
   function scan() {
@@ -323,7 +317,7 @@
     processWatch();
   }
 
-  // requestAnimationFrame은 다음 화면 그리기 직전에 실행되므로 새 카드가 가려지기 전에 보이는 일이 거의 없다
+  // requestAnimationFrame runs right before the next paint, so new cards are covered before they show
   let scheduled = false;
   function scheduleScan() {
     if (scheduled) return;
@@ -341,7 +335,7 @@
   document.addEventListener('yt-navigate-finish', scheduleScan);
   setInterval(scheduleScan, 2000);
 
-  // 가려진 쇼츠가 자동 재생되면 바로 멈춘다
+  // Pause a covered Short as soon as it starts autoplaying
   document.addEventListener(
     'play',
     (e) => {
@@ -353,7 +347,7 @@
     true
   );
 
-  // 가려진 카드에 마우스를 올렸을 때 뜨는 미리보기 재생을 숨긴다
+  // Hide the hover preview player while the pointer is over a covered card
   document.addEventListener(
     'mouseover',
     (e) => {

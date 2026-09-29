@@ -1,3 +1,9 @@
+const t = (name) => chrome.i18n.getMessage(name);
+document.documentElement.lang = chrome.i18n.getUILanguage();
+for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
+for (const el of document.querySelectorAll('[data-i18n-title]')) el.title = t(el.dataset.i18nTitle);
+for (const el of document.querySelectorAll('[data-i18n-placeholder]')) el.placeholder = t(el.dataset.i18nPlaceholder);
+
 const enabledEl = document.getElementById('enabled');
 const form = document.getElementById('add-form');
 const input = document.getElementById('keyword');
@@ -16,7 +22,7 @@ function render() {
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.textContent = '×';
-    remove.title = '삭제';
+    remove.title = t('remove');
     remove.addEventListener('click', () => save(keywords.filter((k) => k !== kw)));
     li.append(label, remove);
     list.append(li);

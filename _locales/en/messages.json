@@ -1,0 +1,23 @@
+{
+  "extName": { "message": "Spoiler Alert" },
+  "extDescription": {
+    "message": "Covers YouTube thumbnails and titles with SPOILER ALERT tape for the games, shows and movies you don't want spoiled."
+  },
+  "toggleTitle": { "message": "Turn spoiler blocking on or off" },
+  "keywordPlaceholder": { "message": "e.g. Elden Ring, Severance" },
+  "add": { "message": "Add" },
+  "hint": {
+    "message": "Matches whole words, ignoring case, spacing and accents. Add several at once with commas."
+  },
+  "empty": { "message": "No keywords yet. Add a game, show or movie to start blocking spoilers." },
+  "remove": { "message": "Remove" },
+  "reelBadge": {
+    "message": "🔒 Possible spoiler · $KEYWORD$",
+    "placeholders": { "keyword": { "content": "$1" } }
+  },
+  "reelReveal": { "message": "Show anyway" },
+  "descReveal": {
+    "message": "⚠ Possible spoiler · $KEYWORD$ — Show description",
+    "placeholders": { "keyword": { "content": "$1" } }
+  }
+}

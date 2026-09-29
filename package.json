@@ -1,0 +1,9 @@
+{
+  "name": "spoiler-alert",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser extension that tapes over YouTube spoilers for the games, shows and movies you care about.",
+  "scripts": {
+    "test": "node --test"
+  }
+}
