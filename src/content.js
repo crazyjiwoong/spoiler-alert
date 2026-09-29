@@ -34,9 +34,9 @@
     'ytd-playlist-thumbnail',
     'yt-thumbnail-view-model',
     'yt-collection-thumbnail-view-model',
-    '[class*="lockup-view-model__content-image"]',
-    '[class*="lockup-view-model-wiz__content-image"]',
-    '[class*="LockupViewModelContentImage"]',
+    '.yt-lockup-view-model__content-image',
+    '.yt-lockup-view-model-wiz__content-image',
+    '.ytLockupViewModelContentImage',
     '.shortsLockupViewModelHostThumbnailContainer',
     'a.reel-item-endpoint',
     'ytm-thumbnail-cover',
@@ -49,9 +49,9 @@
 
   const TITLES = [
     '#video-title',
-    '[class*="lockup-metadata-view-model__title"]',
-    '[class*="lockup-metadata-view-model-wiz__title"]',
-    '[class*="LockupMetadataViewModelTitle"]',
+    '.yt-lockup-metadata-view-model__title',
+    '.yt-lockup-metadata-view-model-wiz__title',
+    '.ytLockupMetadataViewModelTitle',
     '.shortsLockupViewModelHostMetadataTitle',
     '.shortsLockupViewModelHostOutsideMetadataTitle',
     '.media-item-headline',
@@ -79,11 +79,28 @@
 
   // 쇼츠 플레이어 (위아래로 넘기다 자동 재생되는 쇼츠)
   const REELS = 'ytd-reel-video-renderer';
+  // 쇼츠 안에는 플레이어 버튼 문구("이 동영상에 좋아요 표시" 등)도 있으므로 제목·채널·해시태그 영역만 검사한다
+  const REEL_META = [
+    'yt-reel-metapanel-view-model',
+    '.ytShortsVideoTitleViewModelShortsVideoTitle',
+    'yt-shorts-video-title-view-model',
+    'ytd-reel-player-header-renderer',
+    '#metapanel',
+  ].join(',');
+
+  // 영상 페이지의 설명란
+  const WATCH_META = 'ytd-watch-metadata';
+  const WATCH_DESC = [
+    'ytd-watch-metadata #description',
+    '#description-inline-expander',
+    'ytd-video-secondary-info-renderer #description',
+  ].join(',');
 
   let enabled = true;
   let needles = []; // [{ raw, norm }]
   let version = 0;
   const revealedShorts = new Set();
+  const revealedWatch = new Set();
 
   const normalize = (s) =>
     (s || '')
@@ -159,11 +176,7 @@
     }
 
     for (const title of outermost(el, TITLES)) {
-      if (!title.classList.contains('sa-title')) {
-        const size = parseFloat(getComputedStyle(title).fontSize);
-        if (size) title.style.setProperty('--sa-fs', size + 'px');
-        title.classList.add('sa-title');
-      }
+      title.classList.add('sa-title');
       // 마우스를 올렸을 때 뜨는 툴팁으로 원래 제목이 보이지 않게
       if (title.hasAttribute('title')) {
         title.setAttribute('data-sa-orig-title', title.getAttribute('title'));
@@ -184,7 +197,6 @@
     for (const host of el.querySelectorAll('.sa-pos')) host.classList.remove('sa-pos');
     for (const title of el.querySelectorAll('.sa-title')) {
       title.classList.remove('sa-title');
-      title.style.removeProperty('--sa-fs');
       const orig = title.getAttribute('data-sa-orig-title');
       if (orig !== null) {
         if (!title.hasAttribute('title')) title.setAttribute('title', orig);
@@ -236,7 +248,7 @@
 
   function processReel(reel) {
     const key = isActiveReel(reel) ? location.pathname : null;
-    const text = readText(reel);
+    const text = outermost(reel, REEL_META).map(readText).join(' ');
     const sig = version + '|' + key + '|' + text;
     if (reel.__saSig === sig && (!reel.__saHit || reel.querySelector(':scope > .sa-reel-overlay'))) return;
     reel.__saSig = sig;
@@ -273,10 +285,42 @@
     if (key) for (const v of shortsVideos(reel)) if (!v.paused) v.pause();
   }
 
+  // 영상에 들어가도 설명란(+ 챕터 이름)은 키워드가 있으면 접어 둔다
+  function processWatch() {
+    const meta = location.pathname === '/watch' && document.querySelector(WATCH_META);
+    const desc = meta && document.querySelector(WATCH_DESC);
+    const id = new URLSearchParams(location.search).get('v');
+    const hit = desc && !revealedWatch.has(id) ? findHit(meta.textContent) : null;
+
+    document.documentElement.classList.toggle('sa-watch-guard', !!hit);
+    for (const old of document.querySelectorAll('.sa-desc-hidden')) {
+      if (old !== desc || !hit) old.classList.remove('sa-desc-hidden');
+    }
+    for (const gate of document.querySelectorAll('.sa-desc-gate')) {
+      if (gate.nextElementSibling !== desc || !hit) gate.remove();
+    }
+    if (!hit) return;
+
+    desc.classList.add('sa-desc-hidden');
+    let gate = desc.previousElementSibling;
+    if (!gate || !gate.classList.contains('sa-desc-gate')) {
+      gate = document.createElement('button');
+      gate.type = 'button';
+      gate.className = 'sa-desc-gate';
+      gate.addEventListener('click', () => {
+        revealedWatch.add(new URLSearchParams(location.search).get('v'));
+        processWatch();
+      });
+      desc.before(gate);
+    }
+    gate.dataset.kw = hit;
+  }
+
   function scan() {
     scheduled = false;
     for (const el of document.querySelectorAll(RENDERERS)) processCard(el);
     for (const reel of document.querySelectorAll(REELS)) processReel(reel);
+    processWatch();
   }
 
   // requestAnimationFrame은 다음 화면 그리기 직전에 실행되므로 새 카드가 가려지기 전에 보이는 일이 거의 없다

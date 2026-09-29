@@ -84,23 +84,28 @@
 
 /* ---------- 제목 ---------- */
 
+/* 원래 제목은 자리만 차지하게 투명하게 두고, 같은 글자 크기로 위에 SPOILER ALERT를 그린다 */
 .sa-title {
-  font-size: 0 !important;
-  line-height: 0 !important;
+  position: relative !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
 }
 
 .sa-title * {
-  display: none !important;
+  visibility: hidden !important;
 }
 
 .sa-title::before {
   content: "⚠ SPOILER ALERT";
-  display: inline !important;
-  font-size: var(--sa-fs, 14px) !important;
-  line-height: 1.4 !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: visible !important;
+  white-space: nowrap;
   font-weight: 700 !important;
   letter-spacing: 0.02em;
   color: #a16207 !important;
+  -webkit-text-fill-color: currentColor !important;
 }
 
 html[dark] .sa-title::before,
@@ -168,4 +173,44 @@ html.sa-hover-blocked #video-preview {
 
 .sa-reveal::before {
   content: "그래도 볼래요";
+}
+
+/* ---------- 영상 페이지 설명란 ---------- */
+
+.sa-desc-hidden {
+  display: none !important;
+}
+
+.sa-desc-gate {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(135deg, #ffd400 0 14px, #111 14px 28px);
+  cursor: pointer;
+  text-align: left;
+}
+
+.sa-desc-gate::before {
+  content: "⚠ 스포일러 주의 · " attr(data-kw) " — 설명 보기";
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #111;
+  color: #ffd400;
+  font: 700 14px / 1.3 Roboto, Arial, sans-serif;
+}
+
+.sa-desc-gate:hover::before {
+  background: #ffd400;
+  color: #111;
+}
+
+/* 설명을 가린 영상에서는 플레이어의 챕터 이름도 숨긴다 */
+html.sa-watch-guard .ytp-chapter-container,
+html.sa-watch-guard .ytp-tooltip-title {
+  visibility: hidden !important;
 }
